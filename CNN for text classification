@@ -1,0 +1,267 @@
+
+##+++new model 
+
+import os
+import pandas as pd
+import numpy as np
+from keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from sklearn.model_selection import train_test_split
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Activation, Embedding, Conv1D, GlobalMaxPooling1D
+from nltk import everygrams
+from nltk.tokenize import word_tokenize
+
+
+
+import csv
+import os
+import pandas as pd
+from keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from keras.layers import Embedding, Conv1D, GlobalMaxPooling1D, Dense
+from keras.models import Sequential
+os.chdir('C:/1/1 portablezzz n personals/1 studying/term 2/deep learning/TERM PAPER/1 joan')
+
+import pandas as pd
+
+df = pd.read_csv('Cleaned_Data.csv')
+print(df.head())
+print(df.tail())
+import pandas as pd
+
+# Drop rows with NaN values in the 'Scam' column
+df = df.dropna(subset=['Scam'])
+print(df['Scam'].value_counts())
+print(df['Scam'].isna().sum())
+
+# Separate the majority and minority classes
+df_majority = df[df['Scam'] == 0]
+df_minority = df[df['Scam'] == 1]
+print("Number of elements in df_majority:", len(df_majority))
+print("Number of elements in df_minority:", len(df_minority))
+
+
+# Sample an equal number of examples from each class
+n_samples = len(df_minority)
+df_majority_sampled = df_majority.sample(n=n_samples, random_state=42)
+df_balanced = pd.concat([df_majority_sampled, df_minority])
+
+# Shuffle the resulting dataframe
+df_balanced = df_balanced.sample(frac=0.1, random_state=42).reset_index(drop=True)
+
+print(df_balanced['Scam'].value_counts())
+
+
+def one_hot_tokenization(train_df, test_df):
+    tokenizer = Tokenizer(num_words=max_words, filters='', lower=False, split=' ', char_level=False, oov_token=None)
+    X_train = tokenizer.texts_to_matrix(train_df['Text'], mode='onehot')
+    X_test = tokenizer.texts_to_matrix(test_df['Text'], mode='onehot')
+    y_train = train_df['Scam']
+    y_test = test_df['Scam']
+
+    return X_train, X_test, y_train, y_test
+
+
+def embedding_tokenization(train_df, test_df):
+    tokenizer = Tokenizer(num_words=max_words, filters='', lower=False, split=' ', char_level=False, oov_token=None)
+    tokenizer.fit_on_texts(train_df['Text'])
+    X_train = tokenizer.texts_to_sequences(train_df['Text'])
+    X_test = tokenizer.texts_to_sequences(test_df['Text'])
+    X_train = pad_sequences(X_train, maxlen=max_length)
+    X_test = pad_sequences(X_test, maxlen=max_length)
+    y_train = train_df['Scam']
+    y_test = test_df['Scam']
+
+    return X_train, X_test, y_train, y_test
+
+
+def ngram_tokenization(train_df, test_df):
+    def generate_ngrams(text, n_min=2, n_max=2):
+        tokens = word_tokenize(text)
+        n_grams = list(everygrams(tokens, min_len=n_min, max_len=n_max))
+        return [' '.join(grams) for grams in n_grams]
+
+    train_df['ngram_text'] = train_df['Text'].apply(generate_ngrams)
+    test_df['ngram_text'] = test_df['Text'].apply(generate_ngrams)
+
+    tokenizer = Tokenizer(num_words=max_words, filters='', lower=False, split=' ', char_level=False, oov_token=None)
+    tokenizer.fit_on_texts(train_df['ngram_text'])
+    X_train = tokenizer.texts_to_matrix(train_df['ngram_text'], mode='binary')
+    X_test = tokenizer.texts_to_matrix(test_df['ngram_text'], mode='binary')
+    y_train = train_df['Scam']
+    y_test = test_df['Scam']
+
+    return X_train, X_test, y_train, y_test
+
+
+def char_tokenization(train_df, test_df):
+    tokenizer = Tokenizer(num_words=max_words, filters='', lower=False, split='', char_level=True, oov_token=None)
+    tokenizer.fit_on_texts(train_df['Text'])
+    X_train = tokenizer.texts_to_sequences(train_df['Text'])
+    X_test = tokenizer.texts_to_sequences(test_df['Text'])
+    X_train = pad_sequences(X_train, maxlen=max_length)
+    X_test = pad_sequences(X_test, maxlen=max_length)
+    y_train = train_df['Scam']
+    y_test = test_df['Scam']
+
+    return X_train, X_test, y_train, y_test
+
+import plotly.graph_objects as go
+import plotly.io as pio
+
+def plot_history(history, method):
+    fig = go.Figure()
+
+    # Training and validation accuracy
+    fig.add_trace(go.Scatter(x=list(range(1, len(history.history['accuracy'])+1)), y=history.history['accuracy'],
+                             mode='lines+markers', name='Training Accuracy'))
+    fig.add_trace(go.Scatter(x=list(range(1, len(history.history['val_accuracy'])+1)), y=history.history['val_accuracy'],
+                             mode='lines+markers', name='Validation Accuracy'))
+
+    # Training and validation loss
+    fig.add_trace(go.Scatter(x=list(range(1, len(history.history['loss'])+1)), y=history.history['loss'],
+                             mode='lines+markers', name='Training Loss', yaxis="y2"))
+    fig.add_trace(go.Scatter(x=list(range(1, len(history.history['val_loss'])+1)), y=history.history['val_loss'],
+                             mode='lines+markers', name='Validation Loss', yaxis="y2"))
+
+    fig.update_layout(title=f'{method.capitalize()} Tokenization',
+                      xaxis=dict(title='Epoch'),
+                      yaxis=dict(title='Accuracy', range=[0, 1], side="left"),
+                      yaxis2=dict(title='Loss', range=[0, max(max(history.history['loss']), max(history.history['val_loss']))],
+                                  overlaying="y", side="right"))
+    pio.show(fig)
+
+
+
+from keras.models import Sequential
+
+from keras.regularizers import l1, l2
+
+from keras.layers import Embedding, Conv1D, GlobalMaxPooling1D, Dense, Activation, Dropout, BatchNormalization
+
+import os
+import pandas as pd
+import numpy as np
+from keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from sklearn.model_selection import train_test_split
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Activation, Embedding, Conv1D, GlobalMaxPooling1D
+from nltk import everygrams
+from nltk.tokenize import word_tokenize
+from keras.callbacks import EarlyStopping
+from keras.regularizers import l2
+
+# ... (unchanged code)
+
+def load_glove_embeddings(word_index, embedding_dim=200, glove_path='path/to/glove/folder'):
+    embeddings_index = {}
+    glove_file = os.path.join(glove_path, f'glove.6B.{embedding_dim}d.txt')
+
+    with open(glove_file, encoding='utf-8') as f:
+        for line in f:
+            values = line.split()
+            word = values[0]
+            coefs = np.asarray(values[1:], dtype='float32')
+            embeddings_index[word] = coefs
+
+    embedding_matrix = np.zeros((max_words, embedding_dim))
+    for word, i in word_index.items():
+        if i >= max_words:
+            break
+        embedding_vector = embeddings_index.get(word)
+        if embedding_vector is not None:
+            embedding_matrix[i] = embedding_vector
+
+    return embedding_matrix
+
+
+def build_enhanced_one_hot_model():
+    model = Sequential()
+    model.add(Dense(64, input_shape=(max_words,), kernel_regularizer=l2(0.005)))  # Increased regularization strength
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dropout(0.6))  # Adjusted dropout rate
+    model.add(Dense(32, kernel_regularizer=l2(0.005)))  # Increased regularization strength
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dropout(0.6))  # Adjusted dropout rate
+    model.add(Dense(1, activation='sigmoid'))
+
+    return model
+
+def build_enhanced_embedding_model(embedding_matrix=None):
+    model = Sequential()
+    if embedding_matrix is None:
+        model.add(Embedding(max_words, 200, input_length=max_length))
+    else:
+        model.add(Embedding(max_words, 200, input_length=max_length, weights=[embedding_matrix], trainable=False))
+    model.add(Conv1D(64, 3, activation='relu', padding='same', kernel_regularizer=l2(0.005)))  # Increased regularization strength
+    model.add(BatchNormalization())
+    model.add(Conv1D(64, 3, activation='relu', padding='same', kernel_regularizer=l2(0.005)))  # Increased regularization strength
+    model.add(GlobalMaxPooling1D())
+    model.add(Dense(32, kernel_regularizer=l2(0.005)))  # Increased regularization strength
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dropout(0.6))  # Adjusted dropout rate
+    model.add(Dense(1, activation='sigmoid'))
+
+    return model
+
+
+early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+
+
+from sklearn.model_selection import train_test_split
+
+# Split the balanced dataframe into training and testing sets with stratification
+train_df, test_df = train_test_split(df_balanced, test_size=0.2, random_state=42, stratify=df_balanced['Scam'])
+
+print(train_df['Scam'].value_counts())
+print(test_df['Scam'].value_counts())
+
+# Define the maximum number of words to use
+max_words = 10000##10000
+
+# Define the maximum length of a tweet
+max_length = 100
+
+# Define a list of tokenization methods to use
+methods = ['onehot', 'embedding', 'ngram', 'char']
+
+# Loop through each tokenization method
+for method in methods:
+    print("Tokenization method:", method)
+
+    if method == 'onehot':
+        X_train, X_test, y_train, y_test = one_hot_tokenization(train_df, test_df)
+        model = build_enhanced_one_hot_model()
+    elif method == 'embedding':
+        X_train, X_test, y_train, y_test = embedding_tokenization(train_df, test_df)
+        model = build_enhanced_embedding_model()
+    elif method == 'ngram':
+        X_train, X_test, y_train, y_test = ngram_tokenization(train_df, test_df)
+        model = build_enhanced_one_hot_model()
+    elif method == 'char':
+        X_train, X_test, y_train, y_test = char_tokenization(train_df, test_df)
+        model = build_enhanced_embedding_model()
+
+    # Compile the model
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+    # Fit the model to the training data
+    history = model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=20, batch_size=64)###64
+
+    # Plot training and validation loss and accuracy
+    plot_history(history, method)
+
+    # Evaluate the model on the testing data
+    loss, accuracy = model.evaluate(X_test, y_test, verbose=0)
+    print("Testing Accuracy:", accuracy)
+
+
+
+##char epoch20 frac0.1 10000/100
+
+
