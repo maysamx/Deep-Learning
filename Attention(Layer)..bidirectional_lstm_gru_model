@@ -11,7 +11,7 @@ import numpy as np
 import random
 import tensorflow as tf
 
-# Set the seed for random number generation
+# Set the seed ffor random number generation
 seed = 42
 np.random.seed(seed)
 random.seed(seed)
