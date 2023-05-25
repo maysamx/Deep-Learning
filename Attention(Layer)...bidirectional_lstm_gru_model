@@ -33,7 +33,6 @@ import os
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
 
-os.chdir('C:/1/1 portablezzz n personals/1 studying/term 2/deep learning/1 TERM PAPER/1 joan')
 
 # Read the CSV file
 data = pd.read_csv('Cleaned_Data joan output 1gb.csv')
