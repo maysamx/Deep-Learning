@@ -1,7 +1,7 @@
 
 ##testing Attention(Layer)...bidirectional_lstm_gru_model
 
-
+####rrwfsgdfgsdfgasdasasd
 import tensorflow as tf
 import numpy as np
 
